@@ -63,11 +63,12 @@ int calls;
 static gboolean net_available (void);
 static gboolean clock_synced (void);
 static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc);
-static void message (char *msg, gboolean wait, int prog);
+static void message (char *msg, int prog);
 static gboolean quit (GtkButton *button, gpointer data);
 static gboolean start_install (gpointer data);
-static void install_done (PkTask *task, GAsyncResult *res, gpointer data);
 static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data);
+static void install_done (PkTask *task, GAsyncResult *res, gpointer data);
+static gboolean close_end (gpointer data);
 static void progress (PkProgress *progress, PkProgressType *type, gpointer data);
 
 
@@ -109,7 +110,7 @@ static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc)
     if (error != NULL)
     {
         buf = g_strdup_printf (_("Error %s - %s"), desc, error->message);
-        message (buf, TRUE, -2);
+        message (buf, -3);
         g_free (buf);
         return NULL;
     }
@@ -118,7 +119,7 @@ static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc)
     if (pkerror != NULL)
     {
         buf = g_strdup_printf (_("Error %s - %s"), desc, pk_error_get_details (pkerror));
-        message (buf, TRUE, -2);
+        message (buf, -3);
         g_free (buf);
         return NULL;
     }
@@ -131,7 +132,7 @@ static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc)
 /* Progress / error box                                                       */
 /*----------------------------------------------------------------------------*/
 
-static void message (char *msg, gboolean wait, int prog)
+static void message (char *msg, int prog)
 {
     if (!msg_dlg)
     {
@@ -153,6 +154,7 @@ static void message (char *msg, gboolean wait, int prog)
         msg_msg = (GtkWidget *) gtk_builder_get_object (builder, "msg_lbl");
         msg_pb = (GtkWidget *) gtk_builder_get_object (builder, "msg_pb");
         msg_btn = (GtkWidget *) gtk_builder_get_object (builder, "msg_btn");
+        g_signal_connect (msg_btn, "clicked", G_CALLBACK (quit), NULL);
 
         gtk_label_set_text (GTK_LABEL (msg_msg), msg);
 
@@ -161,24 +163,15 @@ static void message (char *msg, gboolean wait, int prog)
     }
     else gtk_label_set_text (GTK_LABEL (msg_msg), msg);
 
-    if (wait)
+    gtk_widget_set_visible (msg_btn, prog == -3);
+    gtk_widget_set_visible (msg_pb, prog > -2);
+
+    if (prog >= 0)
     {
-        gtk_widget_set_visible (msg_pb, FALSE);
-        gtk_button_set_label (GTK_BUTTON (msg_btn), "_OK");
-        g_signal_connect (msg_btn, "clicked", G_CALLBACK (quit), prog == -1 && needs_reboot ? (void *) 1 : NULL);
-        gtk_widget_set_visible (msg_btn, TRUE);
+        float progress = prog / 100.0;
+        gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), progress);
     }
-    else
-    {
-        gtk_widget_set_visible (msg_btn, FALSE);
-        gtk_widget_set_visible (msg_pb, TRUE);
-        if (prog == -1) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
-        else
-        {
-            float progress = prog / 100.0;
-            gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), progress);
-        }
-    }
+    else if (prog == -1) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
 }
 
 static gboolean quit (GtkButton *button, gpointer data)
@@ -188,8 +181,6 @@ static gboolean quit (GtkButton *button, gpointer data)
         gtk_widget_destroy (GTK_WIDGET (msg_dlg));
         msg_dlg = NULL;
     }
-
-    if ((int) data == 1) system ("reboot");
 
     gtk_main_quit ();
     return FALSE;
@@ -204,7 +195,7 @@ static gboolean start_install (gpointer data)
 {
     PkTask *task;
 
-    message (_("Installing - please wait..."), FALSE , -1);
+    message (_("Installing - please wait..."), -1);
 
     task = pk_task_new ();
     pk_client_resolve_async (PK_CLIENT (task), 0, pnames, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) resolve_done, NULL);
@@ -227,13 +218,13 @@ static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data)
 
     sack = pk_results_get_package_sack (results);
     array = pk_package_sack_get_array (sack);
-    if (array->len == 0) message (_("Package not found - exiting"), TRUE, -2);
+    if (array->len == 0) message (_("Package not found - exiting"), -3);
     else
     {
         item = g_ptr_array_index (array, 0);
         g_object_get (item, "info", &info, "package-id", &package_id, NULL);
 
-        if (info == PK_INFO_ENUM_INSTALLED) message (_("Already installed - exiting"), TRUE, -2);
+        if (info == PK_INFO_ENUM_INSTALLED) message (_("Already installed - exiting"), -3);
         else
         {
             pinst[0] = package_id;
@@ -251,7 +242,25 @@ static void install_done (PkTask *task, GAsyncResult *res, gpointer data)
 {
     if (!error_handler (task, res, _("installing packages"))) return;
 
-    message (_("Installation complete"), TRUE, -1);
+    if (needs_reboot)
+        message (_("Installation complete - rebooting"), -2);
+    else
+        message (_("Installation complete"), -2);
+
+    g_timeout_add_seconds (2, close_end, NULL);
+}
+
+static gboolean close_end (gpointer data)
+{
+    if (msg_dlg)
+    {
+        gtk_widget_destroy (GTK_WIDGET (msg_dlg));
+        msg_dlg = NULL;
+    }
+
+    if (needs_reboot) system ("reboot");
+
+    gtk_main_quit ();
 }
 
 static void progress (PkProgress *progress, PkProgressType *type, gpointer data)
@@ -265,25 +274,25 @@ static void progress (PkProgress *progress, PkProgressType *type, gpointer data)
         switch (role)
         {
             case PK_ROLE_ENUM_REFRESH_CACHE :       if (status == PK_STATUS_ENUM_LOADING_CACHE)
-                                                        message (_("Updating package data - please wait..."), FALSE, pk_progress_get_percentage (progress));
+                                                        message (_("Updating package data - please wait..."), pk_progress_get_percentage (progress));
                                                     else
                                                         gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
                                                     break;
 
             case PK_ROLE_ENUM_RESOLVE :             if (status == PK_STATUS_ENUM_LOADING_CACHE)
-                                                        message (_("Finding package - please wait..."), FALSE, pk_progress_get_percentage (progress));
+                                                        message (_("Finding package - please wait..."), pk_progress_get_percentage (progress));
                                                     else
                                                         gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
                                                     break;
 
             case PK_ROLE_ENUM_UPDATE_PACKAGES :     if (status == PK_STATUS_ENUM_LOADING_CACHE)
-                                                        message (_("Updating application - please wait..."), FALSE, pk_progress_get_percentage (progress));
+                                                        message (_("Updating application - please wait..."), pk_progress_get_percentage (progress));
                                                     else
                                                         gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
                                                     break;
 
             case PK_ROLE_ENUM_GET_DETAILS :         if (status == PK_STATUS_ENUM_LOADING_CACHE)
-                                                        message (_("Reading package details - please wait..."), FALSE, pk_progress_get_percentage (progress));
+                                                        message (_("Reading package details - please wait..."), pk_progress_get_percentage (progress));
                                                     else
                                                         gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
                                                     break;
@@ -291,7 +300,7 @@ static void progress (PkProgress *progress, PkProgressType *type, gpointer data)
             case PK_ROLE_ENUM_INSTALL_PACKAGES :    if (status == PK_STATUS_ENUM_DOWNLOAD || status == PK_STATUS_ENUM_INSTALL)
                                                     {
                                                         buf = g_strdup_printf (_("%s package - please wait..."), status == PK_STATUS_ENUM_INSTALL ? _("Installing") : _("Downloading"));
-                                                        message (buf, FALSE, pk_progress_get_percentage (progress));
+                                                        message (buf, pk_progress_get_percentage (progress));
                                                     }
                                                     else
                                                         gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
