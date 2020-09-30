@@ -62,8 +62,6 @@ int calls;
 
 static gboolean net_available (void);
 static gboolean clock_synced (void);
-static void resync (void);
-static gboolean ntp_check (gpointer data);
 static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc);
 static void message (char *msg, gboolean wait, int prog);
 static gboolean quit (GtkButton *button, gpointer data);
@@ -94,38 +92,6 @@ static gboolean clock_synced (void)
         if (system ("timedatectl status | grep -q \"synchronized: yes\"") == 0) return TRUE;
     }
     return FALSE;
-}
-
-static void resync (void)
-{
-    if (system ("test -e /usr/sbin/ntpd") == 0)
-    {
-        system ("/etc/init.d/ntp stop; ntpd -gq; /etc/init.d/ntp start");
-    }
-    else
-    {
-        system ("systemctl -q stop systemd-timesyncd 2> /dev/null; systemctl -q start systemd-timesyncd 2> /dev/null");
-    }
-}
-
-static gboolean ntp_check (gpointer data)
-{
-    gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
-    if (clock_synced ())
-    {
-        g_idle_add (start_install, NULL);
-        return FALSE;
-    }
-    // trigger a resync
-    if (calls == 0) resync ();
-
-    if (calls++ > 120)
-    {
-        message (_("Error synchronising clock - could not sync with time server"), TRUE, -2);
-        return FALSE;
-    }
-
-    return TRUE;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -341,11 +307,45 @@ static void progress (PkProgress *progress, PkProgressType *type, gpointer data)
 
 int main (int argc, char *argv[])
 {
+    char *buf;
+    int res;
+
+    // check a package name was supplied
+    if (argc < 2)
+    {
+        printf ("No package name specified\n");
+        return -1;
+    }
+
+    // check the supplied package exists and is not already installed 
+    buf = g_strdup_printf ("apt-cache policy %s | grep -q \"Installed: (none)\"", argv[1]);
+    res = system (buf);
+    g_free (buf);
+    if (res != 0)
+    {
+        printf ("Package not found or already installed\n");
+        return -1;
+    }
+
+    // check the network is connected
+    if (!net_available ())
+    {
+        printf ("No network connection\n");
+        return -1;
+    }
+
+    // check the clock is synced (as otherwise apt is unhappy)
+    if (!clock_synced ())
+    {
+        printf ("Clock not synchronised - try again later\n");
+        return -1;
+    }
+
 #ifdef ENABLE_NLS
     setlocale (LC_ALL, "");
-    bindtextdomain ( GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR );
-    bind_textdomain_codeset ( GETTEXT_PACKAGE, "UTF-8" );
-    textdomain ( GETTEXT_PACKAGE );
+    bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
+    bind_textdomain_codeset (GETTEXT_PACKAGE, "UTF-8");
+    textdomain (GETTEXT_PACKAGE);
 #endif
 
     // GTK setup
@@ -354,22 +354,6 @@ int main (int argc, char *argv[])
     gtk_init (&argc, &argv);
     gtk_icon_theme_prepend_search_path (gtk_icon_theme_get_default(), PACKAGE_DATA_DIR);
 
-    if (argc < 2)
-    {
-        gdk_threads_leave ();
-        printf ("No package name specified\n");
-        return -1;
-    }
-    char *buf = g_strdup_printf ("apt-cache policy %s | grep -q \"Installed: (none)\"", argv[1]);
-    if (system (buf))
-    {
-        g_free (buf);
-        gdk_threads_leave ();
-        printf ("Package not found or already installed\n");
-        return -1;
-    }
-    g_free (buf);
-
     // create a package name array using the command line argument
     pnames[0] = argv[1];
     pnames[1] = NULL;
@@ -377,17 +361,7 @@ int main (int argc, char *argv[])
     if (argc > 2 && !g_strcmp0 (argv[2], "reboot")) needs_reboot = TRUE;
     else needs_reboot = FALSE;
 
-    if (!net_available ())
-    {
-        message (_("No network connection"), TRUE, -2);
-    }
-    else if (!clock_synced ())
-    {
-        message (_("Synchronising clock - please wait..."), FALSE, -1);
-        calls = 0;
-        g_timeout_add_seconds (1, ntp_check, NULL);
-    }
-    else g_idle_add (start_install, NULL);
+    g_idle_add (start_install, NULL);
 
     gtk_main ();
 
