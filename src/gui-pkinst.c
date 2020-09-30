@@ -354,13 +354,23 @@ int main (int argc, char *argv[])
     gtk_init (&argc, &argv);
     gtk_icon_theme_prepend_search_path (gtk_icon_theme_get_default(), PACKAGE_DATA_DIR);
 
-    // create a package name array using the command line argument
     if (argc < 2)
     {
         gdk_threads_leave ();
         printf ("No package name specified\n");
-        exit (0);
+        return -1;
     }
+    char *buf = g_strdup_printf ("apt-cache policy %s | grep -q \"Installed: (none)\"", argv[1]);
+    if (system (buf))
+    {
+        g_free (buf);
+        gdk_threads_leave ();
+        printf ("Package not found or already installed\n");
+        return -1;
+    }
+    g_free (buf);
+
+    // create a package name array using the command line argument
     pnames[0] = argv[1];
     pnames[1] = NULL;
 
