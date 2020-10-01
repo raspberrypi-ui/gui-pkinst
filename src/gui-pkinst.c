@@ -95,6 +95,18 @@ static gboolean clock_synced (void)
     return FALSE;
 }
 
+
+/*----------------------------------------------------------------------------*/
+/* Voice prompts                                                              */
+/*----------------------------------------------------------------------------*/
+
+static void speak (char *filename)
+{
+    char *buf = g_strdup_printf ("aplay %s/%s", PACKAGE_DATA_DIR, filename);
+    system (buf);
+    g_free (buf);
+}
+
 /*----------------------------------------------------------------------------*/
 /* Helper functions for async operations                                      */
 /*----------------------------------------------------------------------------*/
@@ -111,6 +123,7 @@ static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc)
     {
         buf = g_strdup_printf (_("Error %s - %s"), desc, error->message);
         message (buf, -3);
+        speak ("instfail.wav");
         g_free (buf);
         return NULL;
     }
@@ -120,6 +133,7 @@ static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc)
     {
         buf = g_strdup_printf (_("Error %s - %s"), desc, pk_error_get_details (pkerror));
         message (buf, -3);
+        speak ("instfail.wav");
         g_free (buf);
         return NULL;
     }
@@ -195,6 +209,7 @@ static gboolean start_install (gpointer data)
 {
     PkTask *task;
 
+    speak ("inst.wav");
     message (_("Installing - please wait..."), -1);
 
     task = pk_task_new ();
@@ -218,13 +233,21 @@ static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data)
 
     sack = pk_results_get_package_sack (results);
     array = pk_package_sack_get_array (sack);
-    if (array->len == 0) message (_("Package not found - exiting"), -3);
+    if (array->len == 0)
+    {
+        message (_("Package not found - exiting"), -3);
+        speak ("instfail.wav");
+    }
     else
     {
         item = g_ptr_array_index (array, 0);
         g_object_get (item, "info", &info, "package-id", &package_id, NULL);
 
-        if (info == PK_INFO_ENUM_INSTALLED) message (_("Already installed - exiting"), -3);
+        if (info == PK_INFO_ENUM_INSTALLED)
+        {
+            message (_("Already installed - exiting"), -3);
+            speak ("instfail.wav");
+        }
         else
         {
             pinst[0] = package_id;
@@ -243,9 +266,15 @@ static void install_done (PkTask *task, GAsyncResult *res, gpointer data)
     if (!error_handler (task, res, _("installing packages"))) return;
 
     if (needs_reboot)
+    {
+        speak ("instcompr.wav");
         message (_("Installation complete - rebooting"), -2);
+    }
     else
+    {
+        speak ("instcomp.wav");
         message (_("Installation complete"), -2);
+    }
 
     g_timeout_add_seconds (2, close_end, NULL);
 }
