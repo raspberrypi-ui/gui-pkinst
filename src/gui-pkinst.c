@@ -290,6 +290,7 @@ static gboolean close_end (gpointer data)
     if (needs_reboot) system ("reboot");
 
     gtk_main_quit ();
+    return FALSE;
 }
 
 static void progress (PkProgress *progress, PkProgressType *type, gpointer data)
