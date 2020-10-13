@@ -41,5 +41,4 @@ debian/files
 debian/debhelper-build-stamp
 debian/.debhelper/
 debian/rp-prefapps/
-rp_prefapps
-rp-prefapps
+gui-pkinst
