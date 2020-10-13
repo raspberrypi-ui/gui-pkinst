@@ -1,0 +1,5 @@
+[encoding: UTF-8]
+src/gui-pkinst.c
+[type: gettext/glade] data/gui-pkinst.ui
+# files added by intltool-prepare
+data/pwdgpi.sh
