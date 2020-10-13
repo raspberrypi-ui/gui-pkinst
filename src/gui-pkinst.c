@@ -209,6 +209,7 @@ static gboolean start_install (gpointer data)
 {
     PkTask *task;
 
+    system ("pkill piwiz");
     speak ("inst.wav");
     message (_("Installing - please wait..."), -1);
 
