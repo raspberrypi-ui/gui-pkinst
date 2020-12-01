@@ -65,7 +65,8 @@ static gboolean clock_synced (void);
 static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc);
 static void message (char *msg, int prog);
 static gboolean quit (GtkButton *button, gpointer data);
-static gboolean start_install (gpointer data);
+static gboolean refresh_cache (gpointer data);
+static void start_install (PkTask *task, GAsyncResult *res, gpointer data);
 static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data);
 static void install_done (PkTask *task, GAsyncResult *res, gpointer data);
 static gboolean close_end (gpointer data);
@@ -205,18 +206,27 @@ static gboolean quit (GtkButton *button, gpointer data)
 /* Handlers for asynchronous install sequence                                 */
 /*----------------------------------------------------------------------------*/
 
-static gboolean start_install (gpointer data)
+static gboolean refresh_cache (gpointer data)
 {
     PkTask *task;
 
     system ("pkill piwiz");
     speak ("inst.wav");
-    message (_("Installing - please wait..."), -1);
+    message (_("Updating package data - please wait..."), -1);
 
     task = pk_task_new ();
-    pk_client_resolve_async (PK_CLIENT (task), 0, pnames, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) resolve_done, NULL);
 
+    pk_client_refresh_cache_async (PK_CLIENT (task), TRUE, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) start_install, NULL);
     return FALSE;
+}
+
+static void start_install (PkTask *task, GAsyncResult *res, gpointer data)
+{
+    if (!error_handler (task, res, _("updating cache"))) return;
+
+    message (_("Installing - please wait..."), -1);
+
+    pk_client_resolve_async (PK_CLIENT (task), 0, pnames, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) resolve_done, NULL);
 }
 
 static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data)
@@ -401,7 +411,7 @@ int main (int argc, char *argv[])
     if (argc > 2 && !g_strcmp0 (argv[2], "reboot")) needs_reboot = TRUE;
     else needs_reboot = FALSE;
 
-    g_idle_add (start_install, NULL);
+    g_idle_add (refresh_cache, NULL);
 
     gtk_main ();
 
