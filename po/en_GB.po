@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gui-pkinst 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-10-13 18:00+0100\n"
+"POT-Creation-Date: 2020-12-02 09:09+0000\n"
 "PO-Revision-Date: 2020-10-13 18:01+0100\n"
 "Last-Translator: Simon Long <simon@raspberrypi.com>\n"
 "Language-Team: English (British)\n"
@@ -17,65 +17,69 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: ../src/gui-pkinst.c:124 ../src/gui-pkinst.c:134
+#: ../src/gui-pkinst.c:125 ../src/gui-pkinst.c:135
 #, c-format
 msgid "Error %s - %s"
 msgstr "Error %s - %s"
 
-#: ../src/gui-pkinst.c:214
-msgid "Installing - please wait..."
-msgstr "Installing - please wait..."
-
-#: ../src/gui-pkinst.c:232
-msgid "finding packages"
-msgstr "finding packages"
-
-#: ../src/gui-pkinst.c:239
-msgid "Package not found - exiting"
-msgstr "Package not found - exiting"
-
-#: ../src/gui-pkinst.c:249
-msgid "Already installed - exiting"
-msgstr "Already installed - exiting"
-
-#: ../src/gui-pkinst.c:267
-msgid "installing packages"
-msgstr "installing packages"
-
-#: ../src/gui-pkinst.c:272
-msgid "Installation complete - rebooting"
-msgstr "Installation complete - rebooting"
-
-#: ../src/gui-pkinst.c:277
-msgid "Installation complete"
-msgstr "Installation complete"
-
-#: ../src/gui-pkinst.c:308
+#: ../src/gui-pkinst.c:215 ../src/gui-pkinst.c:318
 msgid "Updating package data - please wait..."
 msgstr "Updating package data - please wait..."
 
-#: ../src/gui-pkinst.c:314
+#: ../src/gui-pkinst.c:225
+msgid "updating cache"
+msgstr "updating cache"
+
+#: ../src/gui-pkinst.c:227
+msgid "Installing - please wait..."
+msgstr "Installing - please wait..."
+
+#: ../src/gui-pkinst.c:242
+msgid "finding packages"
+msgstr "finding packages"
+
+#: ../src/gui-pkinst.c:249
+msgid "Package not found - exiting"
+msgstr "Package not found - exiting"
+
+#: ../src/gui-pkinst.c:259
+msgid "Already installed - exiting"
+msgstr "Already installed - exiting"
+
+#: ../src/gui-pkinst.c:277
+msgid "installing packages"
+msgstr "installing packages"
+
+#: ../src/gui-pkinst.c:282
+msgid "Installation complete - rebooting"
+msgstr "Installation complete - rebooting"
+
+#: ../src/gui-pkinst.c:287
+msgid "Installation complete"
+msgstr "Installation complete"
+
+#: ../src/gui-pkinst.c:324
 msgid "Finding package - please wait..."
 msgstr "Finding package - please wait..."
 
-#: ../src/gui-pkinst.c:320
+#: ../src/gui-pkinst.c:330
 msgid "Updating application - please wait..."
 msgstr "Updating application - please wait..."
 
-#: ../src/gui-pkinst.c:326
+#: ../src/gui-pkinst.c:336
 msgid "Reading package details - please wait..."
 msgstr "Reading package details - please wait..."
 
-#: ../src/gui-pkinst.c:333
+#: ../src/gui-pkinst.c:343
 #, c-format
 msgid "%s package - please wait..."
 msgstr "%s package - please wait..."
 
-#: ../src/gui-pkinst.c:333
+#: ../src/gui-pkinst.c:343
 msgid "Installing"
 msgstr "Installing"
 
-#: ../src/gui-pkinst.c:333
+#: ../src/gui-pkinst.c:343
 msgid "Downloading"
 msgstr "Downloading"
 
