@@ -1,3 +1,9 @@
+gui-pkinst (0.2) buster; urgency=medium
+
+  * Add cache update at start
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 02 Dec 2020 09:11:53 +0000
+
 gui-pkinst (0.1) buster; urgency=medium
 
   * Initial release
