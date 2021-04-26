@@ -1,3 +1,9 @@
+gui-pkinst (0.3) bullseye; urgency=medium
+
+  * Update for GTK+3
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 26 Apr 2021 13:00:43 +0100
+
 gui-pkinst (0.2) buster; urgency=medium
 
   * Add cache update at start

@@ -152,24 +152,14 @@ static void message (char *msg, int prog)
     if (!msg_dlg)
     {
         GtkBuilder *builder;
-        GtkWidget *wid;
-        GdkColor col;
 
-        builder = gtk_builder_new ();
-        gtk_builder_add_from_file (builder, PACKAGE_DATA_DIR "/gui-pkinst.ui", NULL);
+        builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/gui-pkinst.ui");
 
-        msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "msg");
-        gtk_window_set_modal (GTK_WINDOW (msg_dlg), TRUE);
-        gtk_window_set_default_size (GTK_WINDOW (msg_dlg), 340, 100);
+        msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "modal");
 
-        wid = (GtkWidget *) gtk_builder_get_object (builder, "msg_eb");
-        gdk_color_parse ("#FFFFFF", &col);
-        gtk_widget_modify_bg (wid, GTK_STATE_NORMAL, &col);
-
-        msg_msg = (GtkWidget *) gtk_builder_get_object (builder, "msg_lbl");
-        msg_pb = (GtkWidget *) gtk_builder_get_object (builder, "msg_pb");
-        msg_btn = (GtkWidget *) gtk_builder_get_object (builder, "msg_btn");
-        g_signal_connect (msg_btn, "clicked", G_CALLBACK (quit), NULL);
+        msg_msg = (GtkWidget *) gtk_builder_get_object (builder, "modal_msg");
+        msg_pb = (GtkWidget *) gtk_builder_get_object (builder, "modal_pb");
+        msg_btn = (GtkWidget *) gtk_builder_get_object (builder, "modal_ok");
 
         gtk_label_set_text (GTK_LABEL (msg_msg), msg);
 
@@ -180,6 +170,7 @@ static void message (char *msg, int prog)
 
     gtk_widget_set_visible (msg_btn, prog == -3);
     gtk_widget_set_visible (msg_pb, prog > -2);
+    g_signal_connect (msg_btn, "clicked", G_CALLBACK (quit), NULL);
 
     if (prog >= 0)
     {
@@ -399,8 +390,6 @@ int main (int argc, char *argv[])
 #endif
 
     // GTK setup
-    gdk_threads_init ();
-    gdk_threads_enter ();
     gtk_init (&argc, &argv);
     gtk_icon_theme_prepend_search_path (gtk_icon_theme_get_default(), PACKAGE_DATA_DIR);
 
@@ -415,7 +404,6 @@ int main (int argc, char *argv[])
 
     gtk_main ();
 
-    gdk_threads_leave ();
     return 0;
 }
 
