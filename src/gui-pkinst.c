@@ -163,7 +163,6 @@ static void message (char *msg, int prog)
 
         gtk_label_set_text (GTK_LABEL (msg_msg), msg);
 
-        gtk_widget_show_all (msg_dlg);
         g_object_unref (builder);
     }
     else gtk_label_set_text (GTK_LABEL (msg_msg), msg);
@@ -178,6 +177,7 @@ static void message (char *msg, int prog)
         gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), progress);
     }
     else if (prog == -1) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
+    gtk_widget_show (msg_dlg);
 }
 
 static gboolean quit (GtkButton *button, gpointer data)
