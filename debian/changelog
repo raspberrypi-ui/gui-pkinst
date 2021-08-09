@@ -1,3 +1,9 @@
+gui-pkinst (0.5) bullseye; urgency=medium
+
+  * Italian translation added
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 09 Aug 2021 10:07:01 +0100
+
 gui-pkinst (0.4) bullseye; urgency=medium
 
   * Hide in taskbar when running
