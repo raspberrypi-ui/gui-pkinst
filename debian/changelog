@@ -1,3 +1,9 @@
+gui-pkinst (0.6) bullseye; urgency=medium
+
+  * Spawn audio prompts with correct permissions
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 26 Jan 2022 17:19:03 +0000
+
 gui-pkinst (0.5) bullseye; urgency=medium
 
   * Italian translation added
