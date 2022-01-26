@@ -103,9 +103,8 @@ static gboolean clock_synced (void)
 
 static void speak (char *filename)
 {
-    char *buf = g_strdup_printf ("aplay %s/%s", PACKAGE_DATA_DIR, filename);
-    system (buf);
-    g_free (buf);
+    char *args[7] = { "/usr/bin/sudo", "-u", "#1000", "XDG_RUNTIME_DIR=/run/user/1000", "/usr/bin/aplay", filename, NULL };
+    g_spawn_async (PACKAGE_DATA_DIR, args, NULL, 0, NULL, NULL, NULL, NULL);
 }
 
 /*----------------------------------------------------------------------------*/
