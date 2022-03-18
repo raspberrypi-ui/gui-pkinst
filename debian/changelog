@@ -1,3 +1,9 @@
+gui-pkinst (0.7) bullseye; urgency=medium
+
+  * Read relevant user data from environment rather than hard-coding
+
+ -- Simon Long <simon@raspberrypi.com>  Fri, 18 Mar 2022 12:13:46 +0000
+
 gui-pkinst (0.6) bullseye; urgency=medium
 
   * Spawn audio prompts with correct permissions

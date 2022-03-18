@@ -62,6 +62,8 @@ int calls;
 
 static gboolean net_available (void);
 static gboolean clock_synced (void);
+static char *get_shell_string (char *cmd, gboolean all);
+static char *get_string (char *cmd);
 static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc);
 static void message (char *msg, int prog);
 static gboolean quit (GtkButton *button, gpointer data);
@@ -96,6 +98,32 @@ static gboolean clock_synced (void)
     return FALSE;
 }
 
+static char *get_shell_string (char *cmd, gboolean all)
+{
+    char *line = NULL, *res = NULL;
+    size_t len = 0;
+    FILE *fp = popen (cmd, "r");
+
+    if (fp == NULL) return g_strdup ("");
+    if (getline (&line, &len, fp) > 0)
+    {
+        g_strdelimit (line, "\n\r", 0);
+        if (!all)
+        {
+            res = line;
+            while (*res++) if (g_ascii_isspace (*res)) *res = 0;
+        }
+        res = g_strdup (line);
+    }
+    pclose (fp);
+    g_free (line);
+    return res ? res : g_strdup ("");
+}
+
+static char *get_string (char *cmd)
+{
+    return get_shell_string (cmd, FALSE);
+}
 
 /*----------------------------------------------------------------------------*/
 /* Voice prompts                                                              */
@@ -103,8 +131,14 @@ static gboolean clock_synced (void)
 
 static void speak (char *filename)
 {
-    char *args[7] = { "/usr/bin/sudo", "-u", "#1000", "XDG_RUNTIME_DIR=/run/user/1000", "/usr/bin/aplay", filename, NULL };
+    char *user = get_string ("echo $SUDO_USER");
+    char *uid = get_string ("id -u $SUDO_USER");
+    char *rundir = g_strdup_printf ("XDG_RUNTIME_DIR=/run/user/%s", uid);
+    char *args[7] = { "/usr/bin/sudo", "-u", user, rundir, "/usr/bin/aplay", filename, NULL };
     g_spawn_async (PACKAGE_DATA_DIR, args, NULL, 0, NULL, NULL, NULL, NULL);
+    g_free (rundir);
+    g_free (uid);
+    g_free (user);
 }
 
 /*----------------------------------------------------------------------------*/
