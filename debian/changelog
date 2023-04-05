@@ -1,3 +1,9 @@
+gui-pkinst (0.10) bookworm; urgency=medium
+
+  * Added Korean translation
+
+ -- Simon Long <simon@raspberrypi.com>  Wed, 05 Apr 2023 11:51:51 +0100
+
 gui-pkinst (0.9) bullseye; urgency=medium
 
   * Set undecorated dialogs in code
