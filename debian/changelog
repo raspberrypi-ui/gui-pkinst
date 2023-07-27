@@ -1,3 +1,9 @@
+gui-pkinst (0.11) bookworm; urgency=medium
+
+  * Remove sudo script
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 27 Jul 2023 17:54:17 +0100
+
 gui-pkinst (0.10) bookworm; urgency=medium
 
   * Added Korean translation
