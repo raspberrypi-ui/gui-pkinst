@@ -131,14 +131,8 @@ static char *get_string (char *cmd)
 
 static void speak (char *filename)
 {
-    char *user = get_string ("echo $SUDO_USER");
-    char *uid = get_string ("id -u $SUDO_USER");
-    char *rundir = g_strdup_printf ("XDG_RUNTIME_DIR=/run/user/%s", uid);
-    char *args[7] = { "/usr/bin/sudo", "-u", user, rundir, "/usr/bin/aplay", filename, NULL };
+    char *args[3] = { "/usr/bin/aplay", filename, NULL };
     g_spawn_async (PACKAGE_DATA_DIR, args, NULL, 0, NULL, NULL, NULL, NULL);
-    g_free (rundir);
-    g_free (uid);
-    g_free (user);
 }
 
 /*----------------------------------------------------------------------------*/

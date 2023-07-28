@@ -1,3 +1,9 @@
+gui-pkinst (0.12) bookworm; urgency=medium
+
+  * Run aplay without sudo
+
+ -- Simon Long <simon@raspberrypi.com>  Fri, 28 Jul 2023 09:45:57 +0100
+
 gui-pkinst (0.11) bookworm; urgency=medium
 
   * Remove sudo script
