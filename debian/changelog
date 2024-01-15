@@ -1,3 +1,9 @@
+gui-pkinst (0.13) bookworm; urgency=medium
+
+  * Fix hiding of titlebar under Wayland
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 15 Jan 2024 08:00:35 +0000
+
 gui-pkinst (0.12) bookworm; urgency=medium
 
   * Run aplay without sudo
