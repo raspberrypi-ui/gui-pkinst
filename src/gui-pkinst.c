@@ -62,11 +62,13 @@ int calls;
 
 static gboolean net_available (void);
 static gboolean clock_synced (void);
+static void resync (void);
 static char *get_shell_string (char *cmd, gboolean all);
 static char *get_string (char *cmd);
 static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc);
 static void message (char *msg, int prog);
 static gboolean quit (GtkButton *button, gpointer data);
+static gboolean ntp_check (gpointer data);
 static gboolean refresh_cache (gpointer data);
 static void start_install (PkTask *task, GAsyncResult *res, gpointer data);
 static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data);
@@ -96,6 +98,18 @@ static gboolean clock_synced (void)
         if (system ("timedatectl status | grep -q \"synchronized: yes\"") == 0) return TRUE;
     }
     return FALSE;
+}
+
+static void resync (void)
+{
+    if (system ("test -e /usr/sbin/ntpd") == 0)
+    {
+        system ("sudo /etc/init.d/ntp stop; sudo ntpd -gq; sudo /etc/init.d/ntp start");
+    }
+    else
+    {
+        system ("sudo systemctl -q stop systemd-timesyncd 2> /dev/null; sudo systemctl -q start systemd-timesyncd 2> /dev/null");
+    }
 }
 
 static char *get_shell_string (char *cmd, gboolean all)
@@ -223,6 +237,24 @@ static gboolean quit (GtkButton *button, gpointer data)
 /*----------------------------------------------------------------------------*/
 /* Handlers for asynchronous install sequence                                 */
 /*----------------------------------------------------------------------------*/
+
+static gboolean ntp_check (gpointer data)
+{
+    if (clock_synced ())
+    {
+        g_idle_add (refresh_cache, NULL);
+        return FALSE;
+    }
+
+    if (calls++ > 120)
+    {
+        message (_("Could not sync time - unable to install"), -3);
+        speak ("instfail.wav");
+        return FALSE;
+    }
+
+    return TRUE;
+}
 
 static gboolean refresh_cache (gpointer data)
 {
@@ -402,13 +434,6 @@ int main (int argc, char *argv[])
         return -1;
     }
 
-    // check the clock is synced (as otherwise apt is unhappy)
-    if (!clock_synced ())
-    {
-        printf ("Clock not synchronised - try again later\n");
-        return -1;
-    }
-
 #ifdef ENABLE_NLS
     setlocale (LC_ALL, "");
     bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
@@ -427,7 +452,15 @@ int main (int argc, char *argv[])
     if (argc > 2 && !g_strcmp0 (argv[2], "reboot")) needs_reboot = TRUE;
     else needs_reboot = FALSE;
 
-    g_idle_add (refresh_cache, NULL);
+    // check the clock is synced (as otherwise apt is unhappy)
+    calls = 0;
+    if (clock_synced ()) g_idle_add (refresh_cache, NULL);
+    else
+    {
+        message (_("Synchronising clock - please wait..."), -1);
+        resync ();
+        g_timeout_add_seconds (1, ntp_check, NULL);
+    }
 
     gtk_main ();
 
