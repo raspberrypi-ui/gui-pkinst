@@ -248,7 +248,7 @@ static gboolean ntp_check (gpointer data)
 
     if (calls++ > 120)
     {
-        message (_("Could not sync time - unable to install"), -3);
+        message (_("Could not sync time - exiting"), -3);
         speak ("instfail.wav");
         return FALSE;
     }
@@ -427,13 +427,6 @@ int main (int argc, char *argv[])
         return -1;
     }
 
-    // check the network is connected
-    if (!net_available ())
-    {
-        printf ("No network connection\n");
-        return -1;
-    }
-
 #ifdef ENABLE_NLS
     setlocale (LC_ALL, "");
     bindtextdomain (GETTEXT_PACKAGE, PACKAGE_LOCALE_DIR);
@@ -452,15 +445,20 @@ int main (int argc, char *argv[])
     if (argc > 2 && !g_strcmp0 (argv[2], "reboot")) needs_reboot = TRUE;
     else needs_reboot = FALSE;
 
-    // check the clock is synced (as otherwise apt is unhappy)
+    // check the network is connected and the clock is synced
     calls = 0;
-    if (clock_synced ()) g_idle_add (refresh_cache, NULL);
-    else
+    if (!net_available ())
+    {
+        message (_("No network connection - exiting"), -3);
+        speak ("instfail.wav");
+    }
+    else if (!clock_synced ())
     {
         message (_("Synchronising clock - please wait..."), -1);
         resync ();
         g_timeout_add_seconds (1, ntp_check, NULL);
     }
+    else g_idle_add (refresh_cache, NULL);
 
     gtk_main ();
 
