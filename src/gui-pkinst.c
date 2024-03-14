@@ -261,7 +261,6 @@ static gboolean refresh_cache (gpointer data)
     PkTask *task;
 
     system ("pkill piwiz");
-    speak ("inst.wav");
     message (_("Updating package data - please wait..."), -1);
 
     task = pk_task_new ();
@@ -455,10 +454,15 @@ int main (int argc, char *argv[])
     else if (!clock_synced ())
     {
         message (_("Synchronising clock - please wait..."), -1);
+        speak ("inst.wav");
         resync ();
         g_timeout_add_seconds (1, ntp_check, NULL);
     }
-    else g_idle_add (refresh_cache, NULL);
+    else
+    {
+        speak ("inst.wav");
+        g_idle_add (refresh_cache, NULL);
+    }
 
     gtk_main ();
 
