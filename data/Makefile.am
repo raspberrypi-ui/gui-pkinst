@@ -4,7 +4,8 @@ ui_in_files = gui-pkinst.ui \
 				inst.wav \
 				instcomp.wav \
 				instcompr.wav \
-				instfail.wav
+				instfail.wav \
+				whitelist.conf
 	
 ui_DATA = $(ui_in_files)
 
