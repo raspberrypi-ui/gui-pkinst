@@ -74,7 +74,7 @@ static void start_install (PkTask *task, GAsyncResult *res, gpointer data);
 static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data);
 static void install_done (PkTask *task, GAsyncResult *res, gpointer data);
 static gboolean close_end (gpointer data);
-static void progress (PkProgress *progress, PkProgressType *type, gpointer data);
+static void progress (PkProgress *progress, PkProgressType type, gpointer data);
 
 
 /*----------------------------------------------------------------------------*/
@@ -353,7 +353,7 @@ static gboolean close_end (gpointer data)
     return FALSE;
 }
 
-static void progress (PkProgress *progress, PkProgressType *type, gpointer data)
+static void progress (PkProgress *progress, PkProgressType type, gpointer data)
 {
     char *buf, *name;
     int role = pk_progress_get_role (progress);
