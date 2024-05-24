@@ -355,7 +355,7 @@ static gboolean close_end (gpointer data)
 
 static void progress (PkProgress *progress, PkProgressType type, gpointer data)
 {
-    char *buf, *name;
+    char *buf;
     int role = pk_progress_get_role (progress);
     int status = pk_progress_get_status (progress);
 
