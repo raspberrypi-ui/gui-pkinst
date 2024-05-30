@@ -327,7 +327,7 @@ static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data)
             pinst[0] = package_id;
             pinst[1] = NULL;
 
-            message (_("Installing package - please wait..."), MSG_PULSE);
+            message (_("Downloading package - please wait..."), MSG_PULSE);
 
             pk_task_install_packages_async (task, pinst, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) install_done, NULL);
         }
@@ -371,7 +371,6 @@ static gboolean close_end (gpointer data)
 
 static void progress (PkProgress *progress, PkProgressType type, gpointer data)
 {
-    char *buf;
     int role = pk_progress_get_role (progress);
     int status = pk_progress_get_status (progress);
     int percent = pk_progress_get_percentage (progress);
@@ -384,23 +383,10 @@ static void progress (PkProgress *progress, PkProgressType type, gpointer data)
         {
             switch (role)
             {
-                case PK_ROLE_ENUM_REFRESH_CACHE :       if (status == PK_STATUS_ENUM_LOADING_CACHE)
-                                                            message (_("Updating package data - please wait..."), percent);
-                                                        else
-                                                            gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
-                                                        break;
-
-                case PK_ROLE_ENUM_RESOLVE :             if (status == PK_STATUS_ENUM_LOADING_CACHE)
-                                                            message (_("Finding package - please wait..."), percent);
-                                                        else
-                                                            gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
-                                                        break;
-
-                case PK_ROLE_ENUM_INSTALL_PACKAGES :    if (status == PK_STATUS_ENUM_DOWNLOAD || status == PK_STATUS_ENUM_INSTALL)
-                                                        {
-                                                            buf = g_strdup_printf (_("%s package - please wait..."), status == PK_STATUS_ENUM_INSTALL ? _("Installing") : _("Downloading"));
-                                                            message (buf, percent);
-                                                        }
+                case PK_ROLE_ENUM_INSTALL_PACKAGES :    if (status == PK_STATUS_ENUM_DOWNLOAD)
+                                                            message (_("Downloading package - please wait..."), percent);
+                                                        else if (status == PK_STATUS_ENUM_INSTALL || status == PK_STATUS_ENUM_RUNNING)
+                                                            message (_("Installing package - please wait..."), percent);
                                                         else
                                                             gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
                                                         break;
