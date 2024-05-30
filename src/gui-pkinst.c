@@ -48,6 +48,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <libintl.h>
 
+#define MSG_PULSE  -1
+#define MSG_PROMPT -2
+#define MSG_PAUSE  -3
+
 /* Controls */
 
 static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn, *msg_pbv;
@@ -66,7 +70,7 @@ static void resync (void);
 static char *get_shell_string (char *cmd, gboolean all);
 static char *get_string (char *cmd);
 static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc);
-static void message (char *msg, int prog);
+static void message (char *msg, int type);
 static gboolean quit (GtkButton *button, gpointer data);
 static gboolean ntp_check (gpointer data);
 static gboolean refresh_cache (gpointer data);
@@ -164,9 +168,10 @@ static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc)
     if (error != NULL)
     {
         buf = g_strdup_printf (_("Error %s - %s"), desc, error->message);
-        message (buf, -3);
+        message (buf, MSG_PROMPT);
         speak ("instfail.wav");
         g_free (buf);
+        g_error_free (error);
         return NULL;
     }
 
@@ -174,9 +179,10 @@ static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc)
     if (pkerror != NULL)
     {
         buf = g_strdup_printf (_("Error %s - %s"), desc, pk_error_get_details (pkerror));
-        message (buf, -3);
+        message (buf, MSG_PROMPT);
         speak ("instfail.wav");
         g_free (buf);
+        g_object_unref (pkerror);
         return NULL;
     }
 
@@ -188,7 +194,7 @@ static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc)
 /* Progress / error box                                                       */
 /*----------------------------------------------------------------------------*/
 
-static void message (char *msg, int prog)
+static void message (char *msg, int type)
 {
     if (!msg_dlg)
     {
@@ -197,27 +203,35 @@ static void message (char *msg, int prog)
         builder = gtk_builder_new_from_file (PACKAGE_DATA_DIR "/gui-pkinst.ui");
 
         msg_dlg = (GtkWidget *) gtk_builder_get_object (builder, "modal");
-
         msg_msg = (GtkWidget *) gtk_builder_get_object (builder, "modal_msg");
         msg_pb = (GtkWidget *) gtk_builder_get_object (builder, "modal_pb");
         msg_btn = (GtkWidget *) gtk_builder_get_object (builder, "modal_ok");
 
-        gtk_label_set_text (GTK_LABEL (msg_msg), msg);
-
         g_object_unref (builder);
     }
-    else gtk_label_set_text (GTK_LABEL (msg_msg), msg);
 
-    gtk_widget_set_visible (msg_btn, prog == -3);
-    gtk_widget_set_visible (msg_pb, prog > -2);
-    g_signal_connect (msg_btn, "clicked", G_CALLBACK (quit), NULL);
+    gtk_label_set_text (GTK_LABEL (msg_msg), msg);
 
-    if (prog >= 0)
+    gtk_widget_hide (msg_pb);
+    gtk_widget_hide (msg_btn);
+
+    switch (type)
     {
-        float progress = prog / 100.0;
-        gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), progress);
+        case MSG_PROMPT :   g_signal_connect (msg_btn, "clicked", G_CALLBACK (quit), NULL);
+                            gtk_widget_show (msg_btn);
+                            break;
+
+        case MSG_PULSE :    gtk_widget_show (msg_pb);
+                            gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
+                            break;
+
+        case MSG_PAUSE :    break;
+
+        default :           gtk_widget_show (msg_pb);
+                            gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR (msg_pb), (type / 100.0));
+                            break;
     }
-    else if (prog == -1) gtk_progress_bar_pulse (GTK_PROGRESS_BAR (msg_pb));
+
     gtk_widget_show (msg_dlg);
 }
 
@@ -248,7 +262,7 @@ static gboolean ntp_check (gpointer data)
 
     if (calls++ > 120)
     {
-        message (_("Could not sync time - exiting"), -3);
+        message (_("Could not sync time - exiting"), MSG_PROMPT);
         speak ("instfail.wav");
         return FALSE;
     }
@@ -261,7 +275,7 @@ static gboolean refresh_cache (gpointer data)
     PkTask *task;
 
     system ("pkill piwiz");
-    message (_("Updating package data - please wait..."), -1);
+    message (_("Updating package data - please wait..."), MSG_PULSE);
 
     task = pk_task_new ();
 
@@ -273,7 +287,7 @@ static void start_install (PkTask *task, GAsyncResult *res, gpointer data)
 {
     if (!error_handler (task, res, _("updating cache"))) return;
 
-    message (_("Finding package - please wait..."), -1);
+    message (_("Finding package - please wait..."), MSG_PULSE);
 
     pk_client_resolve_async (PK_CLIENT (task), 0, pnames, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) resolve_done, NULL);
 }
@@ -295,7 +309,7 @@ static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data)
     array = pk_package_sack_get_array (sack);
     if (array->len == 0)
     {
-        message (_("Package not found - exiting"), -3);
+        message (_("Package not found - exiting"), MSG_PROMPT);
         speak ("instfail.wav");
     }
     else
@@ -305,7 +319,7 @@ static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data)
 
         if (info == PK_INFO_ENUM_INSTALLED)
         {
-            message (_("Already installed - exiting"), -3);
+            message (_("Already installed - exiting"), MSG_PROMPT);
             speak ("instfail.wav");
         }
         else
@@ -313,7 +327,7 @@ static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data)
             pinst[0] = package_id;
             pinst[1] = NULL;
 
-            message (_("Installing package - please wait..."), -1);
+            message (_("Installing package - please wait..."), MSG_PULSE);
 
             pk_task_install_packages_async (task, pinst, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) install_done, NULL);
         }
@@ -330,12 +344,12 @@ static void install_done (PkTask *task, GAsyncResult *res, gpointer data)
     if (needs_reboot)
     {
         speak ("instcompr.wav");
-        message (_("Installation complete - rebooting"), -2);
+        message (_("Installation complete - rebooting"), MSG_PAUSE);
     }
     else
     {
         speak ("instcomp.wav");
-        message (_("Installation complete"), -2);
+        message (_("Installation complete"), MSG_PAUSE);
     }
 
     g_timeout_add_seconds (2, close_end, NULL);
@@ -458,12 +472,12 @@ int main (int argc, char *argv[])
     calls = 0;
     if (!net_available ())
     {
-        message (_("No network connection - exiting"), -3);
+        message (_("No network connection - exiting"), MSG_PROMPT);
         speak ("instfail.wav");
     }
     else if (!clock_synced ())
     {
-        message (_("Synchronising clock - please wait..."), -1);
+        message (_("Synchronising clock - please wait..."), MSG_PULSE);
         speak ("inst.wav");
         resync ();
         g_timeout_add_seconds (1, ntp_check, NULL);
