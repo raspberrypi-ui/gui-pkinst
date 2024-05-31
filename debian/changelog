@@ -1,3 +1,9 @@
+gui-pkinst (0.16) bookworm; urgency=medium
+
+  * Tweaks to PackageKit messages
+
+ -- Simon Long <simon@raspberrypi.com>  Fri, 31 May 2024 08:38:52 +0100
+
 gui-pkinst (0.15) bookworm; urgency=medium
 
   * Only allow whitelisted packages
