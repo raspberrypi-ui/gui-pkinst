@@ -275,7 +275,7 @@ static gboolean refresh_cache (gpointer data)
     PkTask *task;
 
     system ("pkill piwiz");
-    message (_("Updating package data - please wait..."), MSG_PULSE);
+    message (_("Finding package - please wait..."), MSG_PULSE);
 
     task = pk_task_new ();
 
