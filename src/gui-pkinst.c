@@ -340,6 +340,7 @@ static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data)
 static void install_done (PkTask *task, GAsyncResult *res, gpointer data)
 {
     if (!error_handler (task, res, _("installing packages"))) return;
+    gtk_window_set_title (GTK_WINDOW (msg_dlg), _("Install complete"));
 
     if (needs_reboot)
     {
@@ -445,6 +446,7 @@ int main (int argc, char *argv[])
 #endif
 
     // GTK setup
+    g_set_prgname ("wf-panel-pi");
     gtk_init (&argc, &argv);
     gtk_icon_theme_prepend_search_path (gtk_icon_theme_get_default(), PACKAGE_DATA_DIR);
 
