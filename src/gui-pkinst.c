@@ -69,13 +69,13 @@ static gboolean clock_synced (void);
 static void resync (void);
 static char *get_shell_string (char *cmd, gboolean all);
 static char *get_string (char *cmd);
-static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc);
+static PkResults *error_handler (PkTask *task, PkClient *client, GAsyncResult *res, char *desc);
 static void message (char *msg, int type);
 static gboolean quit (GtkButton *button, gpointer data);
 static gboolean ntp_check (gpointer data);
 static gboolean refresh_cache (gpointer data);
-static void start_install (PkTask *task, GAsyncResult *res, gpointer data);
-static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data);
+static void start_install (PkClient *client, GAsyncResult *res, gpointer data);
+static void resolve_done (PkClient *client, GAsyncResult *res, gpointer data);
 static void install_done (PkTask *task, GAsyncResult *res, gpointer data);
 static gboolean close_end (gpointer data);
 static void progress (PkProgress *progress, PkProgressType type, gpointer data);
@@ -157,14 +157,15 @@ static void speak (char *filename)
 /* Helper functions for async operations                                      */
 /*----------------------------------------------------------------------------*/
 
-static PkResults *error_handler (PkTask *task, GAsyncResult *res, char *desc)
+static PkResults *error_handler (PkTask *task, PkClient *client, GAsyncResult *res, char *desc)
 {
     PkResults *results;
     PkError *pkerror;
     GError *error = NULL;
     gchar *buf;
 
-    results = pk_task_generic_finish (task, res, &error);
+    if (task) results = pk_task_generic_finish (task, res, &error);
+    else results = pk_client_generic_finish (client, res, &error);
     if (error != NULL)
     {
         buf = g_strdup_printf (_("Error %s - %s"), desc, error->message);
@@ -283,16 +284,16 @@ static gboolean refresh_cache (gpointer data)
     return FALSE;
 }
 
-static void start_install (PkTask *task, GAsyncResult *res, gpointer data)
+static void start_install (PkClient *client, GAsyncResult *res, gpointer data)
 {
-    if (!error_handler (task, res, _("updating cache"))) return;
+    if (!error_handler (NULL, client, res, _("updating cache"))) return;
 
     message (_("Finding package - please wait..."), MSG_PULSE);
 
-    pk_client_resolve_async (PK_CLIENT (task), 0, pnames, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) resolve_done, NULL);
+    pk_client_resolve_async (client, 0, pnames, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) resolve_done, NULL);
 }
 
-static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data)
+static void resolve_done (PkClient *client, GAsyncResult *res, gpointer data)
 {
     PkResults *results;
     PkPackageSack *sack;
@@ -302,7 +303,7 @@ static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data)
     gchar *package_id;
     gchar *pinst[2];
 
-    results = error_handler (task, res, _("finding packages"));
+    results = error_handler (NULL, client, res, _("finding packages"));
     if (!results) return;
 
     sack = pk_results_get_package_sack (results);
@@ -329,7 +330,7 @@ static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data)
 
             message (_("Downloading package - please wait..."), MSG_PULSE);
 
-            pk_task_install_packages_async (task, pinst, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) install_done, NULL);
+            pk_task_install_packages_async (PK_TASK (client), pinst, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) install_done, NULL);
         }
     }
 
@@ -339,7 +340,7 @@ static void resolve_done (PkTask *task, GAsyncResult *res, gpointer data)
 
 static void install_done (PkTask *task, GAsyncResult *res, gpointer data)
 {
-    if (!error_handler (task, res, _("installing packages"))) return;
+    if (!error_handler (task, NULL, res, _("installing packages"))) return;
     gtk_window_set_title (GTK_WINDOW (msg_dlg), _("Install complete"));
 
     if (needs_reboot)
