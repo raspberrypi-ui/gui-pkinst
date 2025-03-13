@@ -1,3 +1,9 @@
+gui-pkinst (0.20) bookworm; urgency=medium
+
+  * Be more strict about PkTask vs PkClient, because trixie cares...
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 13 Mar 2025 14:04:07 +0000
+
 gui-pkinst (0.19) bookworm; urgency=medium
 
   * Add taskbar caption
