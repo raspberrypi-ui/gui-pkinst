@@ -1,16 +1,14 @@
 Source: gui-pkinst
 Section: admin
 Priority: optional
-Maintainer: Simon Long <simon@raspberrypi.org>
-Build-Depends: debhelper (>= 9), dh-autoreconf, libglib2.0-dev, libgtk-3-dev (>= 3.24),
- libx11-dev, intltool, libpackagekit-glib2-dev, dh-exec
-Standards-Version: 3.9.6
-Homepage: https://github.com/raspberrypi-ui/rp_prefapps
-Vcs-Git: git://git@github.com:raspberrypi-ui/rp_prefapps.git
-Vcs-Browser: https://github.com/raspberrypi-ui/rp_prefapps
+Maintainer: Simon Long <simon@raspberrypi.com>
+Build-Depends: debhelper-compat (= 13), meson, libgtk-3-dev (>= 3.24), intltool (>= 0.40.0),
+ libpackagekit-glib2-dev
+Standards-Version: 4.5.1
+Homepage: http://raspberrypi.com/
 
 Package: gui-pkinst
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, packagekit, alsa-utils
+Depends: ${shlibs:Depends}, ${misc:Depends}, packagekit, alsa-utils, libgtk-3-0 (>= 3.24)
 Description: Simple command-line package installer
  Installs a single package with GUI progress boxes.

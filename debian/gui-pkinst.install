@@ -1,2 +1,0 @@
-#!/usr/bin/dh-exec
-data/10-gui-pkinst.rules => /usr/share/polkit-1/rules.d/10-gui-pkinst.rules

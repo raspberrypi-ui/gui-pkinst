@@ -1,3 +1,9 @@
+gui-pkinst (0.21) bookworm; urgency=medium
+
+  * Switch to meson build system
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 27 Mar 2025 13:50:35 +0000
+
 gui-pkinst (0.20) bookworm; urgency=medium
 
   * Be more strict about PkTask vs PkClient, because trixie cares...
