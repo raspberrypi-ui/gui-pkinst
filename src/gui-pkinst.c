@@ -427,7 +427,7 @@ int main (int argc, char *argv[])
     }
 
     // check the supplied package exists and is not already installed 
-    buf = g_strdup_printf ("apt-cache policy %s | grep -q \"Installed: (none)\"", argv[1]);
+    buf = g_strdup_printf ("apt-cache policy %s | head -n 2 | tail -n 1 | grep -q \\(", argv[1]);
     res = system (buf);
     g_free (buf);
     if (res != 0)
