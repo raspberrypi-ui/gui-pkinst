@@ -51,7 +51,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* Controls */
 
-static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn, *msg_pbv;
+static GtkWidget *msg_dlg, *msg_msg, *msg_pb, *msg_btn;
 
 gchar *pnames[2];
 gboolean needs_reboot;
@@ -64,8 +64,6 @@ int calls;
 static gboolean net_available (void);
 static gboolean clock_synced (void);
 static void resync (void);
-static char *get_shell_string (char *cmd, gboolean all);
-static char *get_string (char *cmd);
 static PkResults *error_handler (PkTask *task, PkClient *client, GAsyncResult *res, char *desc);
 static void message (char *msg, int type);
 static gboolean quit (GtkButton *button, gpointer data);
@@ -76,7 +74,6 @@ static void resolve_done (PkClient *client, GAsyncResult *res, gpointer data);
 static void install_done (PkTask *task, GAsyncResult *res, gpointer data);
 static gboolean close_end (gpointer data);
 static void progress (PkProgress *progress, PkProgressType type, gpointer data);
-
 
 /*----------------------------------------------------------------------------*/
 /* Helper functions for system status                                         */
@@ -111,33 +108,6 @@ static void resync (void)
     {
         system ("sudo systemctl -q stop systemd-timesyncd 2> /dev/null; sudo systemctl -q start systemd-timesyncd 2> /dev/null");
     }
-}
-
-static char *get_shell_string (char *cmd, gboolean all)
-{
-    char *line = NULL, *res = NULL;
-    size_t len = 0;
-    FILE *fp = popen (cmd, "r");
-
-    if (fp == NULL) return g_strdup ("");
-    if (getline (&line, &len, fp) > 0)
-    {
-        g_strdelimit (line, "\n\r", 0);
-        if (!all)
-        {
-            res = line;
-            while (*res++) if (g_ascii_isspace (*res)) *res = 0;
-        }
-        res = g_strdup (line);
-    }
-    pclose (fp);
-    g_free (line);
-    return res ? res : g_strdup ("");
-}
-
-static char *get_string (char *cmd)
-{
-    return get_shell_string (cmd, FALSE);
 }
 
 /*----------------------------------------------------------------------------*/
