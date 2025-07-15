@@ -9,6 +9,6 @@ Homepage: http://raspberrypi.com/
 
 Package: gui-pkinst
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libgtk-3-0 (>= 3.24), packagekit, alsa-utils
+Depends: ${shlibs:Depends}, ${misc:Depends}, packagekit, alsa-utils
 Description: Simple command-line package installer
  Installs a single package with GUI progress boxes.

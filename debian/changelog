@@ -1,3 +1,9 @@
+gui-pkinst (0.22) trixie; urgency=medium
+
+  * Fix dependencies
+
+ -- Simon Long <simon@raspberrypi.com>  Tue, 15 Jul 2025 14:52:01 +0100
+
 gui-pkinst (0.21) bookworm; urgency=medium
 
   * Switch to meson build system
