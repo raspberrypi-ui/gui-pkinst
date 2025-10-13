@@ -332,7 +332,7 @@ static gboolean close_end (gpointer data)
         msg_dlg = NULL;
     }
 
-    if (needs_reboot) system ("reboot");
+    if (needs_reboot) system ("/usr/sbin/reboot");
 
     gtk_main_quit ();
     return FALSE;
