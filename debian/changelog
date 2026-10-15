@@ -1,3 +1,9 @@
+gui-pkinst (0.24) trixie; urgency=medium
+
+  * Implement architecture filtering
+
+ -- Simon Long <simon@raspberrypi.com>  Thu, 15 Oct 2026 15:10:51 +0100
+
 gui-pkinst (0.23) trixie; urgency=medium
 
   * Use full path for reboot
