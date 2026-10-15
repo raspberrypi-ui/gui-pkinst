@@ -257,7 +257,7 @@ static void start_install (PkClient *client, GAsyncResult *res, gpointer data)
 
     message (_("Finding package - please wait..."), MSG_PULSE);
 
-    pk_client_resolve_async (client, 0, pnames, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) resolve_done, NULL);
+    pk_client_resolve_async (client, pk_bitfield_value (PK_FILTER_ENUM_ARCH), pnames, NULL, (PkProgressCallback) progress, NULL, (GAsyncReadyCallback) resolve_done, NULL);
 }
 
 static void resolve_done (PkClient *client, GAsyncResult *res, gpointer data)
