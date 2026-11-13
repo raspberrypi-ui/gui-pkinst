@@ -106,7 +106,7 @@ static void resync (void)
     }
     else
     {
-        system ("sudo systemctl -q stop systemd-timesyncd 2> /dev/null; sudo systemctl -q start systemd-timesyncd 2> /dev/null");
+        system ("systemctl -q restart systemd-timesyncd 2> /dev/null");
     }
 }
 
