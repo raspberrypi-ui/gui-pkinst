@@ -87,27 +87,13 @@ static gboolean net_available (void)
 
 static gboolean clock_synced (void)
 {
-    if (system ("test -e /usr/sbin/ntpd") == 0)
-    {
-        if (system ("ntpq -p | grep -q ^\\*") == 0) return TRUE;
-    }
-    else
-    {
-        if (system ("timedatectl status | grep -q \"synchronized: yes\"") == 0) return TRUE;
-    }
+    if (system ("timedatectl status | grep -q \"synchronized: yes\"") == 0) return TRUE;
     return FALSE;
 }
 
 static void resync (void)
 {
-    if (system ("test -e /usr/sbin/ntpd") == 0)
-    {
-        system ("sudo /etc/init.d/ntp stop; sudo ntpd -gq; sudo /etc/init.d/ntp start");
-    }
-    else
-    {
-        system ("systemctl -q restart systemd-timesyncd 2> /dev/null");
-    }
+    system ("systemctl -q restart systemd-timesyncd 2> /dev/null");
 }
 
 /*----------------------------------------------------------------------------*/
