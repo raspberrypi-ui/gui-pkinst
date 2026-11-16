@@ -1,3 +1,9 @@
+gui-pkinst (0.25) trixie; urgency=medium
+
+  * Remove ntpd; update polkit
+
+ -- Simon Long <simon@raspberrypi.com>  Mon, 16 Nov 2026 09:47:53 +0000
+
 gui-pkinst (0.24) trixie; urgency=medium
 
   * Implement architecture filtering
